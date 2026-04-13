@@ -1,0 +1,57 @@
+services:
+  - name: jellyfin
+    image: jellyfin/jellyfin
+    port: 8096
+    nodePort: 30096
+    volumes:
+      - name: jellyfin-config
+        mountPath: /config
+      - name: jellyfin-cache
+        mountPath: /cache
+      - name: jellyfin-media
+        mountPath: /media
+  - name: deluge
+    image: lscr.io/linuxserver/deluge:latest
+    port: 8112
+    nodePort: 30112
+    volumes: 
+      - name: deluge-config
+        mountPath: /config
+      - name: jellyfin-media
+        mountPath: /downloads
+      - name: jackett-blackhole
+        mountPath: /watch
+  - name: jackett
+    image: lscr.io/linuxserver/jackett:latest
+    port: 9117
+    nodePort: 30117
+    volumes: 
+      - name: jackett-config
+        mountPath: /config
+      - name: jackett-blackhole
+        mountPath: /watch
+volumes: 
+  - name: jellyfin-config
+    hostPath: /home/engineer/projects/J16/media-server/jellyfin/config
+    mountPath: /config
+    size: 1Gi
+  - name: jellyfin-cache
+    hostPath: /home/engineer/projects/J16/media-server/jellyfin/cache
+    mountPath: /cache
+    size: 5Gi
+  - name: jellyfin-media
+    hostPath: /home/engineer/projects/J16/media-server/jellyfin/media
+    mountPath: /media
+    size: 50Gi
+  - name: deluge-config
+    hostPath: /home/engineer/projects/J16/media-server/deluge/config
+    mountPath: /config
+    size: 500Mi
+  - name: jackett-config
+    hostPath: /home/engineer/projects/J16/media-server/jackett/config
+    mountPath: /config
+    size: 500Mi
+  - name: jackett-blackhole
+    hostPath: /home/engineer/projects/J16/media-server/jackett/blackhole
+    mountPath: /downloads
+    size: 1Gi

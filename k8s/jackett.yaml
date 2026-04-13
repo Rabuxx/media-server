@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jackett-blackhole
+spec:
+  storageClassName: local-path
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /home/engineer/projects/J16/media-server/jackett/blackhole
+
+--- 
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jackett-config
+spec:
+  storageClassName: local-path
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /home/engineer/projects/J16/media-server/jackett/config
+
+--- 
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jackett-blackhole
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: jackett-blackhole
+
+--- 
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jackett-config
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  volumeName: jackett-config
+
+--- 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jackett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jackett
+  template:
+    metadata:
+      labels:
+        app: jackett
+    spec:
+      containers:
+        - name: jackett
+          image: lscr.io/linuxserver/jackett:latest
+          ports:
+            - containerPort: 9117
+          volumeMounts:
+            - name: jackett-blackhole
+              mountPath: /downloads
+            - name: jackett-config
+              mountPath: /config
+      volumes:
+        - name: jackett-blackhole
+          persistentVolumeClaim:
+            claimName: jackett-blackhole
+        - name: jackett-config
+          persistentVolumeClaim:
+            claimName: jackett-config
+          
+--- 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: jackett
+spec:
+  selector:
+    app: jackett
+  type: NodePort
+  ports:
+    - port: 9117
+      targetPort: 9117
+      nodePort: 30117

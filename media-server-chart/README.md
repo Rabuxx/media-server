@@ -1,72 +1,66 @@
-# 🎬 Media Server — Helm Chart
+# Media Server — Helm Chart
 
-Un serveur multimédia personnel déployé sur Kubernetes via un chart Helm, pour télécharger et regarder des films en streaming depuis ton navigateur.
+Un serveur pour télécharger des films en torrent et les regarder depuis le navigateur.
+Tout est déployé sur Kubernetes via Helm, en une seule commande.
 
-> Projet réalisé dans le cadre d'un hackathon DevOps — découverte de Helm et de l'orchestration Kubernetes.
+> Projet fait pendant un hackathon DevOps, pour apprendre Helm et comprendre comment
+> orchestrer plusieurs services avec Kubernetes.
 
 ---
 
-## C'est quoi ce projet ?
+## C'est quoi ?
 
-L'idée : reproduire ton propre Netflix à la maison avec trois outils open source, déployés en une seule commande grâce à Helm :
+Même idée que la version Docker Compose, mais cette fois déployée sur Kubernetes.
+Trois outils qui fonctionnent ensemble :
 
-| Outil | Rôle | Analogie |
-|-------|------|----------|
-| **Jackett** | Cherche des films disponibles en torrent | Google, mais pour les torrents |
-| **Deluge** | Télécharge les films via torrent | Un client torrent avec interface web |
-| **Jellyfin** | Affiche et lit les films en streaming | Ton Netflix perso |
+| Outil | Rôle |
+|-------|------|
+| **Jackett** | Chercher des films disponibles en torrent |
+| **Deluge** | Télécharger ces films |
+| **Jellyfin** | Les regarder depuis le navigateur |
 
 ---
 
 ## C'est quoi Helm ?
 
-Helm est le **gestionnaire de paquets de Kubernetes**.
+Kubernetes demande un fichier de config pour chaque chose : chaque service, chaque volume, chaque règle réseau... Ça fait vite beaucoup de fichiers à gérer.
 
-Sans Helm, tu dois écrire et appliquer un fichier YAML par service, par volume, par service réseau... Ça devient vite des dizaines de fichiers à maintenir.
+Helm règle ce problème. Tu mets toutes tes valeurs dans un seul fichier (`values.yaml`), et Helm génère tout le reste automatiquement à partir de templates.
 
-Avec Helm, tu définis **une seule fois** tes valeurs dans `values.yaml`, et des **templates** génèrent automatiquement tous les objets Kubernetes.
-
-```
-Analogie : si Kubernetes c'est un OS, Helm c'est apt ou npm.
-```
-
-### Structure du chart
+### Comment c'est organisé
 
 ```
 media-server-chart/
-├── Chart.yaml          ← carte d'identité du chart (nom, version)
-├── values.yaml         ← toutes les valeurs configurables (images, ports, volumes...)
-└── templates/
-    ├── deployment.yaml ← template des Deployments (boucle sur les 3 services)
-    ├── service.yaml    ← template des Services (boucle sur les 3 services)
-    ├── pv.yaml         ← template des PersistentVolumes
-    └── pvc.yaml        ← template des PersistentVolumeClaims
+  Chart.yaml          <- nom et version du chart
+  values.yaml         <- toute la config (ports, images, volumes...)
+  templates/
+    deployment.yaml   <- template pour déployer les 3 services
+    service.yaml      <- template pour exposer les 3 services
+    pv.yaml           <- template pour les volumes
+    pvc.yaml          <- template pour les demandes de volumes
 ```
 
-Au lieu de dupliquer la configuration pour chaque service, les templates utilisent une boucle `range` pour itérer sur les services et volumes définis dans `values.yaml` :
+Au lieu d'écrire trois fois la même chose pour chaque service, les templates utilisent une boucle qui tourne sur ce qui est défini dans `values.yaml` :
 
 ```yaml
 {{- range .Values.services }}
   name: {{ .name }}
   image: {{ .image }}
-  ...
 {{- end }}
 ```
 
 ---
 
-## Ce dont tu as besoin
+## Ce qu'il faut avoir
 
-- Un ordinateur sous Linux (ou une VM)
-- **k3s** — la version légère de Kubernetes
-- **Helm** — le gestionnaire de paquets Kubernetes
+- Un ordi sous Linux (ou une VM)
+- **k3s** — une version allégée de Kubernetes
+- **Helm** — pour déployer le chart
 
 ### Installer k3s
 
 ```bash
 curl -sfL https://get.k3s.io | sh -
-
-# Vérifier que le nœud est prêt
 sudo kubectl get nodes
 ```
 
@@ -74,12 +68,10 @@ sudo kubectl get nodes
 
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Vérifier l'installation
 helm version
 ```
 
-### Exposer la config k3s à Helm
+### Donner accès à la config k3s
 
 ```bash
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
@@ -90,24 +82,19 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ## Déployer
 
 ```bash
-# Cloner le projet
 git clone https://github.com/Rabuxx/media-server.git
 cd media-server
-
-# Déployer avec Helm
 helm install media-server media-server-chart
-
-# Vérifier que tout tourne
 sudo kubectl get pods
 ```
 
-Tu devrais voir les 3 pods avec le statut `Running`. 
+Si les 3 pods affichent `Running`, c'est bon.
 
 ---
 
 ## Accéder aux interfaces
 
-> Remplace `<IP>` par l'IP de ta machine (`ip addr show`).
+Remplace `<IP>` par l'IP de ta machine (commande : `ip addr show`).
 
 | Interface | Adresse | Identifiants par défaut |
 |-----------|---------|--------------------------|
@@ -117,9 +104,10 @@ Tu devrais voir les 3 pods avec le statut `Running`.
 
 ---
 
-## Personnaliser la configuration
+## Changer la config
 
-Toute la configuration est centralisée dans `values.yaml`. Tu peux modifier les ports, les images ou les tailles de volumes sans toucher aux templates.
+Tout est dans `values.yaml`. Tu peux modifier les ports, les images Docker ou les tailles
+de volumes sans toucher aux templates.
 
 ```yaml
 services:
@@ -127,20 +115,9 @@ services:
     image: jellyfin/jellyfin
     port: 8096
     nodePort: 30096
-    volumes:
-      - name: jellyfin-config
-        mountPath: /config
-      ...
-
-volumes:
-  - name: jellyfin-config
-    hostPath: /home/engineer/projects/J16/media-server/jellyfin/config
-    mountPath: /config
-    size: 1Gi
-  ...
 ```
 
-Après modification, mets à jour le déploiement :
+Après une modif, pour mettre à jour :
 
 ```bash
 helm upgrade media-server media-server-chart
@@ -150,34 +127,37 @@ helm upgrade media-server media-server-chart
 
 ## Premiers pas
 
-### 1. Configurer Jellyfin
-Au premier lancement, un assistant te guide :
-- Crée un compte administrateur (note bien ton mot de passe !)
+### 1. Jellyfin
+
+Au premier lancement il y a un assistant :
+- Crée un compte admin (note le mot de passe)
 - Ajoute une médiathèque : type **Films**, dossier `/media`
 
-### 2. Ajouter un indexeur sur Jackett
-- Clique sur **Add Indexer**
-- Recherche **Internet Archive** (films du domaine public, gratuits et légaux)
-- Clique sur **+** pour l'ajouter
+### 2. Jackett
 
-### 3. Télécharger ton premier film
-- Recherche un film dans Jackett et récupère le fichier `.torrent`
-- Ajoute-le dans Deluge (bouton **+** → **Fichier**)
+- Clique sur **Add Indexer**
+- Cherche **Internet Archive** (films gratuits et légaux)
+- Clique sur **+**
+
+### 3. Télécharger un film
+
+- Cherche dans Jackett, récupère le `.torrent`
+- Mets-le dans Deluge (bouton **+** → **Fichier**)
 - Attends la fin du téléchargement
-- Le film apparaît tout seul dans Jellyfin 
+- Le film apparaît dans Jellyfin tout seul
 
 ---
 
 ## Commandes utiles
 
 ```bash
-# Voir les releases Helm déployées
+# Voir ce qui est déployé
 helm list
 
-# Mettre à jour après modification de values.yaml
+# Mettre à jour après une modif
 helm upgrade media-server media-server-chart
 
-# Désinstaller (sans supprimer les données)
+# Désinstaller (sans perdre les données)
 helm uninstall media-server
 
 # État des pods
@@ -186,18 +166,8 @@ sudo kubectl get pods
 # Logs d'un pod
 sudo kubectl logs <nom-du-pod>
 
-# Déboguer un problème
+# Déboguer un pod qui ne démarre pas
 sudo kubectl describe pod <nom-du-pod>
 ```
 
-> Les données (films, config) sont stockées dans les dossiers locaux — désinstaller le chart ne les efface pas.
-
----
-
-## Ce que j'ai appris
-
-- **Helm** — packager et déployer une application Kubernetes en une commande
-- **Templates & values.yaml** — séparer la configuration du code d'infrastructure
-- **Boucles `range`** — générer dynamiquement des objets Kubernetes sans répétition
-- **PersistentVolumes & PVC** — gérer le stockage persistant dans Kubernetes
-- **Volumes partagés** — faire communiquer plusieurs services via un dossier commun
+Les films et les configs sont stockés en local — désinstaller le chart ne les efface pas.

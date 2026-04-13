@@ -12,9 +12,9 @@ L'idée : reproduire ton propre Netflix à la maison, en utilisant trois outils 
  
 | Outil | Rôle | Analogie |
 |-------|------|----------|
-| 🔍 **Jackett** | Cherche des films disponibles en torrent | Google, mais pour les torrents |
-| ⬇️ **Deluge** | Télécharge les films via torrent | Un client torrent avec interface web |
-| 🎬 **Jellyfin** | Affiche et lit les films en streaming | Ton Netflix perso |
+|  **Jackett** | Cherche des films disponibles en torrent | Google, mais pour les torrents |
+|  **Deluge** | Télécharge les films via torrent | Un client torrent avec interface web |
+|  **Jellyfin** | Affiche et lit les films en streaming | Ton Netflix perso |
  
 ### Comment ils s'enchaînent ?
  
@@ -27,7 +27,7 @@ L'idée : reproduire ton propre Netflix à la maison, en utilisant trois outils 
         ↓
 4. Le film apparaît automatiquement sur Jellyfin
         ↓
-5. Tu le regardes depuis ton navigateur 🍿
+5. Tu le regardes depuis ton navigateur 
 ```
  
 ---
@@ -75,7 +75,7 @@ sudo docker-compose up -d
 sudo docker-compose ps
 ```
  
-Tu devrais voir les 3 services avec le statut `Up`. ✅
+Tu devrais voir les 3 services avec le statut `Up`. 
  
 ---
  
@@ -85,9 +85,9 @@ Ouvre ton navigateur et va sur ces adresses (remplace `localhost` par l'IP de ta
  
 | Interface | Adresse | Mot de passe par défaut |
 |-----------|---------|--------------------------|
-| 🎬 Jellyfin | http://localhost:8096 | À créer au premier lancement |
-| ⬇️ Deluge | http://localhost:8112 | `deluge` |
-| 🔍 Jackett | http://localhost:9117 | Aucun |
+|  Jellyfin | http://localhost:8096 | À créer au premier lancement |
+|  Deluge | http://localhost:8112 | `deluge` |
+|  Jackett | http://localhost:9117 | Aucun |
  
 > **Sur une VM ?** Trouve ton IP avec `ip addr show` et cherche une ligne `inet 192.168.x.x`.
  
@@ -110,7 +110,7 @@ Au premier lancement, un assistant te guide :
 - Récupère le fichier `.torrent`
 - Ajoute-le dans Deluge (bouton **+** → **Fichier**)
 - Attends la fin du téléchargement
-- Le film apparaît tout seul dans Jellyfin 🎉
+- Le film apparaît tout seul dans Jellyfin 
  
 ---
  
@@ -125,7 +125,7 @@ media-server/
 ├── jellyfin/
 │   ├── config/            ← préférences de Jellyfin
 │   ├── cache/             ← cache (miniatures, etc.)
-│   └── media/             ← 📁 tes films sont ici
+│   └── media/             ← tes films sont ici
 │
 ├── deluge/
 │   └── config/            ← préférences de Deluge
@@ -161,7 +161,7 @@ sudo docker-compose restart deluge
  
 **Non.** Tous les fichiers (films, configuration, préférences) sont stockés sur ta machine dans le dossier `media-server/`. Les conteneurs Docker ne sont que des "boîtes" qui font tourner les applications — supprimer la boîte ne supprime pas ton contenu.
  
-C'est ce qu'on appelle des **volumes persistants** en Docker. 🗂️
+C'est ce qu'on appelle des **volumes persistants** en Docker. 
  
 ---
  
@@ -169,7 +169,7 @@ C'est ce qu'on appelle des **volumes persistants** en Docker. 🗂️
  
 Ce projet m'a permis de découvrir :
  
-- 🐳 **Docker & Docker Compose** — lancer plusieurs applications isolées
-- 💾 **Les volumes** — faire persister des données entre redémarrages
-- 🔗 **La communication entre conteneurs** — partager un dossier entre deux services
-- 🏠 **Le self-hosting** — héberger ses propres services plutôt que dépendre d'un tiers
+-  **Docker & Docker Compose** — lancer plusieurs applications isolées
+-  **Les volumes** — faire persister des données entre redémarrages
+-  **La communication entre conteneurs** — partager un dossier entre deux services
+-  **Le self-hosting** — héberger ses propres services plutôt que dépendre d'un tiers
